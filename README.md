@@ -74,9 +74,9 @@ cd Back-end
 ```env
 DB_HOST=localhost
 DB_PORT=5432
-DB_USERNAME=postgres
-DB_PASSWORD=postgres
-DB_DATABASE=finapp
+DB_USERNAME=[your username]
+DB_PASSWORD=[your password]
+DB_DATABASE=[your name DB]
 
 JWT_SECRET=uma_senha_bem_secreta
 NODE_ENV=dev
