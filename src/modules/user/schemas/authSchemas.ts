@@ -17,5 +17,5 @@ export const loginSchema = z.object({
 });
 
 export const resendCodeSchema = z.object({
-  email: z.string().email(),
+  email: z.email(),
 });

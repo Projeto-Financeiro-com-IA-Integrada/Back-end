@@ -52,7 +52,6 @@ export class UserService {
 
     await repo.save(user);
 
-    // TODO: enviar e-mail com verificationCode
     const emailSent = await sendVerificationEmail(email, name, verificationCode);
 
     if (!emailSent) {
@@ -178,6 +177,7 @@ export class UserService {
     user.verificationExpiresAt = newExpiresAt;
 
     await repo.save(user);
+
 
     // Enviar e-mail com novo código
     const emailSent = await sendVerificationEmail(email, user.name, newCode);

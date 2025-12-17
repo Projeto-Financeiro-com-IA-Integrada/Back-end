@@ -45,7 +45,7 @@ export async function sendVerificationEmail(
           
           <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
           <p style="font-size: 12px; color: #999; text-align: center;">
-            © 2024 App Financeiro. Todos os direitos reservados.
+            © 2025 App Financeiro. Todos os direitos reservados.
           </p>
         </div>
       `,
