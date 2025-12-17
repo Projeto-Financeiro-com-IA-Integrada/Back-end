@@ -42,4 +42,17 @@ export class AuthController {
       return res.status(500).json({ message: "Erro interno" });
     }
   }
+
+  static async resendCode(req: Request, res: Response) {
+    try {
+      const { email } = req.body;
+
+      const result = await userService.resendCode({ email });
+
+      return res.status(result.status).json(result.body);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: "Erro interno" });
+    }
+  }
 }

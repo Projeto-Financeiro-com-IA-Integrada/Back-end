@@ -5,6 +5,7 @@ import {
   registerSchema,
   verifyEmailSchema,
   loginSchema,
+  resendCodeSchema
 } from "../modules/user/schemas/authSchemas";
 
 export const authRouter = Router();
@@ -25,4 +26,10 @@ authRouter.post(
   "/login",
   validateBody(loginSchema),
   AuthController.login
+);
+
+authRouter.post(
+  "/resend-code",
+  validateBody(resendCodeSchema),
+  AuthController.resendCode
 );

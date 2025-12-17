@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { userRepository } from "../repositories/UserRepository";
+import { sendVerificationEmail } from "../../../shared/providers/MailProvider";
 
 interface RegisterDTO {
   email: string;
@@ -16,6 +17,10 @@ interface VerifyEmailDTO {
 interface LoginDTO {
   email: string;
   password: string;
+}
+
+interface ResendCodeDTO {
+  email: string;
 }
 
 export class UserService {
@@ -48,6 +53,14 @@ export class UserService {
     await repo.save(user);
 
     // TODO: enviar e-mail com verificationCode
+    const emailSent = await sendVerificationEmail(email, name, verificationCode);
+
+    if (!emailSent) {
+      return {
+        status: 500,
+        body: { message: "Usuário criado, mas falha ao enviar e-mail. Tente reenviar." },
+      };
+    }
 
     return {
       status: 201,
@@ -136,6 +149,49 @@ export class UserService {
     return {
       status: 200,
       body: { accessToken: token },
+    };
+  }
+
+  async resendCode({ email }: ResendCodeDTO) {
+    const repo = userRepository();
+    const user = await repo.findOne({ where: { email } });
+
+    if (!user) {
+      return {
+        status: 404,
+        body: { message: "Usuário não encontrado" },
+      };
+    }
+
+    if (user.isVerified) {
+      return {
+        status: 400,
+        body: { message: "E-mail já verificado" },
+      };
+    }
+
+    // Gerar novo código
+    const newCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const newExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+    user.verificationCode = newCode;
+    user.verificationExpiresAt = newExpiresAt;
+
+    await repo.save(user);
+
+    // Enviar e-mail com novo código
+    const emailSent = await sendVerificationEmail(email, user.name, newCode);
+
+    if (!emailSent) {
+      return {
+        status: 500,
+        body: { message: "Falha ao enviar e-mail. Tente novamente." },
+      };
+    }
+
+    return {
+      status: 200,
+      body: { message: "Novo código enviado para seu e-mail" },
     };
   }
 }
