@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import { userRepository } from "../repositories/UserRepository";
-import { sendVerificationEmail } from "../../../shared/providers/MailProvider";
+import { sendVerificationEmail, sendAccountDeletionEmail } from "../../../shared/providers/MailProvider";
 
 interface UpdateProfileDTO {
   userId: string;
@@ -237,7 +237,7 @@ export class ProfileService {
 
     await repo.save(user);
 
-    const emailSent = await sendVerificationEmail(
+    const emailSent = await sendAccountDeletionEmail(
       user.email,
       user.name,
       newCode
