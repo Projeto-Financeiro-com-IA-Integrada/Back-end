@@ -11,6 +11,25 @@ services:
       - "${DB_PORT}:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
+    networks:
+      - finapp_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: finapp_redis
+    restart: always
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - finapp_network
+    command: redis-server --appendonly yes
 
 volumes:
   db_data:
+  redis_data:
+
+networks:
+  finapp_network:
+    driver: bridge

@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { userRepository } from "../repositories/UserRepository";
 import { sendVerificationEmail } from "../../../shared/providers/MailProvider";
+import { RedisRateLimiter } from "../../../utils/redisRateLimiter";
 
 interface RegisterDTO {
   email: string;
@@ -67,7 +68,17 @@ export class UserService {
     };
   }
 
-  async verifyEmail({ email, code }: VerifyEmailDTO) {
+    async verifyEmail({ email, code }: VerifyEmailDTO) {
+    // Verifica Rate Limit ANTES de processar
+    const rateLimitCheck = await RedisRateLimiter.checkVerificationAttempts(email);
+    
+    if (!rateLimitCheck.allowed) {
+      return {
+        status: 429, // Too Many Requests
+        body: { message: rateLimitCheck.message },
+      };
+    }
+
     const repo = userRepository();
     const user = await repo.findOne({ where: { email } });
 
@@ -90,6 +101,9 @@ export class UserService {
       !user.verificationExpiresAt ||
       user.verificationExpiresAt < new Date()
     ) {
+      // Registra tentativa falhada
+      await RedisRateLimiter.recordFailedAttempt(email);
+      
       return {
         status: 400,
         body: { message: "Código inválido ou expirado" },
@@ -99,8 +113,10 @@ export class UserService {
     user.isVerified = true;
     user.verificationCode = null;
     user.verificationExpiresAt = null;
-
     await repo.save(user);
+
+    // Reseta tentativas após sucesso
+    await RedisRateLimiter.resetAttempts(email);
 
     return {
       status: 200,
@@ -169,7 +185,6 @@ export class UserService {
       };
     }
 
-    // Gerar novo código
     const newCode = Math.floor(100000 + Math.random() * 900000).toString();
     const newExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
@@ -178,8 +193,6 @@ export class UserService {
 
     await repo.save(user);
 
-
-    // Enviar e-mail com novo código
     const emailSent = await sendVerificationEmail(email, user.name, newCode);
 
     if (!emailSent) {
