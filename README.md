@@ -120,6 +120,8 @@ npm run dev
 
 O servidor estará disponível em `http://localhost:3000`
 
+Swagger docs: `http://localhost:3000/api-docs`
+
 ---
 
 ## Endpoints da API
