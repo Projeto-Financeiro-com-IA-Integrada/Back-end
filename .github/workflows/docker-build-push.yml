@@ -60,7 +60,7 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=ref,event=branch
-            type=sha,prefix={{branch}}-
+            type=sha,prefix=sha-
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Docker image
@@ -76,28 +76,36 @@ jobs:
 
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/')
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ steps.extract-version.outputs.version }}
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ steps.extract-version.outputs.version }}
           body: |
             ## Versão ${{ steps.extract-version.outputs.version }}
 
-            **Docker Image:**
+            ### Docker Image
             ```
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.extract-version.outputs.version }}
             ```
 
-            **Commit:** ${{ github.sha }}
-            **Branch:** ${{ github.ref }}
+            ### Deploy
+            ```bash
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.extract-version.outputs.version }}
+            docker run -d -p 3333:3333 --env-file .env ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.extract-version.outputs.version }}
+            ```
+
+            **Commit:** [`${{ github.sha }}`](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+
+            **Branch:** `${{ github.ref_name }}`
+
           draft: false
           prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Print Summary
         run: |
           echo "Build Completo!"
           echo "Versão: ${{ steps.extract-version.outputs.version }}"
           echo "Imagem: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
-          echo "Tags: ${{ steps.meta.outputs.tags }}"
+          echo "Tags geradas:"
+          echo "${{ steps.meta.outputs.tags }}"
