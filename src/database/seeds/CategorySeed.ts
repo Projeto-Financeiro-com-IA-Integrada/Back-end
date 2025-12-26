@@ -60,6 +60,7 @@ export const categoriesSeed = async (dataSource: DataSource) => {
   ];
 
   const allCategories = [...incomeCategories, ...expenseCategories];
+  const createdCategories: Category[] = [];
 
   for (const category of allCategories) {
     const exists = await categoryRepository.findOne({ 
@@ -67,9 +68,11 @@ export const categoriesSeed = async (dataSource: DataSource) => {
     });
     
     if (!exists) {
-      await categoryRepository.save(category);
+      const created = await categoryRepository.save(category);
+      createdCategories.push(created);
     }
   }
 
-  console.log("✅ Categorias inseridas com sucesso!");
+  console.log(`✅ ${createdCategories.length} categorias inseridas com sucesso!`);
+  return createdCategories;
 };

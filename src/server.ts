@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import { AppDataSource } from "./data-source";
 import { initializeRedis } from "./utils/redisRateLimiter";
 import { app } from "./app";
+import { categoriesSeed } from "./database/seeds/CategorySeed";
 
 dotenv.config();
 
@@ -12,6 +13,9 @@ async function startServer() {
   try {
     await AppDataSource.initialize();
     console.log("DB connected");
+
+        // Executar seeds
+    await categoriesSeed(AppDataSource);
 
     await initializeRedis();
     console.log("Redis connected");
