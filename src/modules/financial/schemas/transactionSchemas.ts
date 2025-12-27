@@ -9,7 +9,7 @@ export const createTransactionSchema = z.object({
       "Valor muito grande"
     ),
   description: z.string().min(3, "Descrição muito curta").max(255),
-  date: z.string().datetime().or(z.date()),
+  date: z.string().or(z.date()),
   categoryId: z.string().uuid("ID de categoria inválido"),
   notes: z.string().max(500).optional(),
   status: z.enum(["pending", "completed", "cancelled"]).optional()

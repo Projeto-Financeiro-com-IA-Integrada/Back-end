@@ -1,8 +1,9 @@
 import "reflect-metadata";
-import { DataSource, Transaction } from "typeorm";
+import { DataSource} from "typeorm";
 import { User } from "./modules/user/entities/User";
 import dotenv from "dotenv";
 import { Category } from "./modules/financial/entities/Category";
+import { Transaction } from "./modules/financial/entities/Transaction"; 
 
 dotenv.config();
 

@@ -14,10 +14,14 @@ export class TransactionService {
     this.categoryRepository = new CategoryRepository();
   }
 
+  /**
+   * Criar nova transação
+   */
   async createTransaction(userId: string, data: any) {
-
+    // Validar com Zod
     const validated = createTransactionSchema.parse(data);
 
+    // Verificar se categoria existe
     const category = await this.categoryRepository.findById(validated.categoryId);
     if (!category) {
       throw new AppError("Categoria não encontrada", 404);
@@ -39,6 +43,9 @@ export class TransactionService {
     return this.formatTransactionResponse(transaction);
   }
 
+  /**
+   * Obter transação por ID
+   */
   async getTransactionById(userId: string, transactionId: string) {
     const transaction = await this.transactionRepository.findById(transactionId);
 
@@ -76,6 +83,9 @@ export class TransactionService {
     };
   }
 
+  /**
+   * Listar transações do mês
+   */
   async getMonthlyTransactions(userId: string, month: number, year: number) {
     if (month < 1 || month > 12) {
       throw new AppError("Mês inválido", 400);
@@ -111,6 +121,9 @@ export class TransactionService {
     };
   }
 
+  /**
+   * Atualizar transação
+   */
   async updateTransaction(
     userId: string,
     transactionId: string,
@@ -125,6 +138,7 @@ export class TransactionService {
     // Validar dados
     const validated = updateTransactionSchema.parse(data);
 
+    // Se houver categoria, verificar
     if (validated.categoryId) {
       const category = await this.categoryRepository.findById(
         validated.categoryId
@@ -142,7 +156,7 @@ export class TransactionService {
     if (validated.description) updateData.description = validated.description;
     if (validated.date) updateData.date = new Date(validated.date);
     if (validated.categoryId) updateData.categoryId = validated.categoryId;
-    if (validated.notes) updateData.notes = validated.notes;
+    if (validated.notes !== undefined) updateData.notes = validated.notes;
 
     const updated = await this.transactionRepository.update(
       transactionId,
@@ -156,6 +170,9 @@ export class TransactionService {
     return this.formatTransactionResponse(updated);
   }
 
+  /**
+   * Deletar transação
+   */
   async deleteTransaction(userId: string, transactionId: string) {
     const transaction = await this.transactionRepository.findById(transactionId);
     if (!transaction || transaction.userId !== userId) {
@@ -171,6 +188,9 @@ export class TransactionService {
     return { message: "Transação deletada com sucesso" };
   }
 
+  /**
+   * Buscar transações por categoria
+   */
   async getTransactionsByCategory(userId: string, categoryId: string) {
     const transactions = await this.transactionRepository.findByCategory(
       userId,
@@ -212,17 +232,32 @@ export class TransactionService {
     };
   }
 
-
   /**
-   * Formatar resposta de transação
+   * ✅ Formatar resposta de transação - VERSÃO ROBUSTA
    */
   private formatTransactionResponse(transaction: Transaction) {
+    // Helper para garantir formato de data correto
+    const formatDate = (date: any): string => {
+      if (date instanceof Date) {
+        return date.toISOString().split("T")[0];
+      }
+      if (typeof date === "string") {
+        return date.split("T")[0];
+      }
+      // Fallback: tentar converter para Date
+      try {
+        return new Date(date).toISOString().split("T")[0];
+      } catch {
+        return String(date);
+      }
+    };
+
     return {
       id: transaction.id,
       amount: fromBRL(transaction.amountCents),
       amountFormatted: formatBRL(transaction.amountCents),
       description: transaction.description,
-      date: transaction.date.toISOString().split("T"),
+      date: formatDate(transaction.date), // ✅ Usa o helper
       status: transaction.status,
       category: {
         id: transaction.category.id,
@@ -237,4 +272,3 @@ export class TransactionService {
     };
   }
 }
-

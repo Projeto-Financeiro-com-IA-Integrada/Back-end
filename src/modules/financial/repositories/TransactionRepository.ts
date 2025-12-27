@@ -9,7 +9,7 @@ export class TransactionRepository {
     this.repo = AppDataSource.getRepository(Transaction);
   }
   
-  async create(data: {
+async create(data: {
     userId: string;
     categoryId: string;
     amountCents: number;
@@ -27,7 +27,18 @@ export class TransactionRepository {
       status: TransactionStatus.COMPLETED,
     });
 
-    return this.repo.save(transaction);
+    await this.repo.save(transaction);
+
+    const createdTransaction = await this.repo.findOne({
+      where: { id: transaction.id },
+      relations: ["category", "user"],
+    });
+
+    if (!createdTransaction) {
+      throw new Error("Erro ao criar transação");
+    }
+
+    return createdTransaction;
   }
 
   async findById(id: string): Promise<Transaction | null> {
