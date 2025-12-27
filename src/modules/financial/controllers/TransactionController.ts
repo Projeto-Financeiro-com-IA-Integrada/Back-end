@@ -36,9 +36,6 @@ export class TransactionController {
     }
   }
 
-  /**
-   * GET /transactions/:id - Obter transação por ID
-   */
   async getById(req: Request, res: Response): Promise<Response> {
     try {
       const userId = (req as any).userId;
@@ -67,9 +64,6 @@ export class TransactionController {
     }
   }
 
-  /**
-   * GET /transactions - Listar transações do usuário
-   */
   async list(req: Request, res: Response): Promise<Response> {
     try {
       const userId = (req as any).userId;
@@ -95,9 +89,6 @@ export class TransactionController {
     }
   }
 
-  /**
-   * GET /transactions/month/:year/:month - Transações do mês
-   */
   async getMonthly(req: Request, res: Response): Promise<Response> {
     try {
       const userId = (req as any).userId;
@@ -128,9 +119,6 @@ export class TransactionController {
     }
   }
 
-  /**
-   * GET /transactions/balance/:year/:month - Saldo do mês
-   */
   async getBalance(req: Request, res: Response): Promise<Response> {
     try {
       const userId = (req as any).userId;
@@ -160,9 +148,6 @@ export class TransactionController {
     }
   }
 
-  /**
-   * PATCH /transactions/:id - Atualizar transação
-   */
   async update(req: Request, res: Response): Promise<Response> {
     try {
       const userId = (req as any).userId;
@@ -193,9 +178,6 @@ export class TransactionController {
     }
   }
 
-  /**
-   * DELETE /transactions/:id - Deletar transação
-   */
   async delete(req: Request, res: Response): Promise<Response> {
     try {
       const userId = (req as any).userId;
@@ -221,9 +203,6 @@ export class TransactionController {
     }
   }
 
-  /**
-   * GET /transactions/category/:categoryId - Transações por categoria
-   */
   async getByCategory(req: Request, res: Response): Promise<Response> {
     try {
       const userId = (req as any).userId;

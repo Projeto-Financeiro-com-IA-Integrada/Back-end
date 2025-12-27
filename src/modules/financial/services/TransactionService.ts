@@ -14,14 +14,10 @@ export class TransactionService {
     this.categoryRepository = new CategoryRepository();
   }
 
-  /**
-   * Criar nova transação
-   */
   async createTransaction(userId: string, data: any) {
-    // Validar com Zod
+
     const validated = createTransactionSchema.parse(data);
 
-    // Verificar se categoria existe
     const category = await this.categoryRepository.findById(validated.categoryId);
     if (!category) {
       throw new AppError("Categoria não encontrada", 404);
@@ -43,9 +39,6 @@ export class TransactionService {
     return this.formatTransactionResponse(transaction);
   }
 
-  /**
-   * Obter transação por ID
-   */
   async getTransactionById(userId: string, transactionId: string) {
     const transaction = await this.transactionRepository.findById(transactionId);
 
@@ -83,9 +76,6 @@ export class TransactionService {
     };
   }
 
-  /**
-   * Listar transações do mês
-   */
   async getMonthlyTransactions(userId: string, month: number, year: number) {
     if (month < 1 || month > 12) {
       throw new AppError("Mês inválido", 400);
@@ -121,9 +111,6 @@ export class TransactionService {
     };
   }
 
-  /**
-   * Atualizar transação
-   */
   async updateTransaction(
     userId: string,
     transactionId: string,
@@ -138,7 +125,6 @@ export class TransactionService {
     // Validar dados
     const validated = updateTransactionSchema.parse(data);
 
-    // Se houver categoria, verificar
     if (validated.categoryId) {
       const category = await this.categoryRepository.findById(
         validated.categoryId
@@ -170,9 +156,6 @@ export class TransactionService {
     return this.formatTransactionResponse(updated);
   }
 
-  /**
-   * Deletar transação
-   */
   async deleteTransaction(userId: string, transactionId: string) {
     const transaction = await this.transactionRepository.findById(transactionId);
     if (!transaction || transaction.userId !== userId) {
@@ -188,9 +171,6 @@ export class TransactionService {
     return { message: "Transação deletada com sucesso" };
   }
 
-  /**
-   * Buscar transações por categoria
-   */
   async getTransactionsByCategory(userId: string, categoryId: string) {
     const transactions = await this.transactionRepository.findByCategory(
       userId,
@@ -231,6 +211,7 @@ export class TransactionService {
       balanceFormatted: formatBRL(balance),
     };
   }
+
 
   /**
    * Formatar resposta de transação

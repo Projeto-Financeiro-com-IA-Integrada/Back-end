@@ -8,10 +8,7 @@ export class TransactionRepository {
   constructor() {
     this.repo = AppDataSource.getRepository(Transaction);
   }
-
-  /**
-   * Criar nova transação
-   */
+  
   async create(data: {
     userId: string;
     categoryId: string;
@@ -33,9 +30,6 @@ export class TransactionRepository {
     return this.repo.save(transaction);
   }
 
-  /**
-   * Buscar transação por ID
-   */
   async findById(id: string): Promise<Transaction | null> {
     return this.repo.findOne({
       where: { id },
@@ -43,9 +37,6 @@ export class TransactionRepository {
     });
   }
 
-  /**
-   * Buscar todas as transações do usuário
-   */
   async findByUserId(
     userId: string,
     limit: number = 50,
@@ -94,9 +85,6 @@ export class TransactionRepository {
     });
   }
 
-  /**
-   * Atualizar transação
-   */
   async update(
     id: string,
     data: Partial<{
@@ -112,9 +100,6 @@ export class TransactionRepository {
     return this.findById(id);
   }
 
-  /**
-   * Deletar transação
-   */
   async delete(id: string): Promise<boolean> {
     const result = await this.repo.delete(id);
     return result.affected ? result.affected > 0 : false;
@@ -162,9 +147,6 @@ export class TransactionRepository {
     return parseInt(result?.total) || 0;
   }
 
-  /**
-   * Saldo total (receitas - despesas)
-   */
   async getBalance(
     userId: string,
     month: number,
