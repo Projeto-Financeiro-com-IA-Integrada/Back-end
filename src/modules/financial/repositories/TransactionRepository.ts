@@ -1,6 +1,7 @@
 import { Repository } from "typeorm";
 import { AppDataSource } from "../../../data-source";
 import { Transaction, TransactionStatus } from "../entities/Transaction";
+import { TransactionType } from "../entities/Category";
 
 export class TransactionRepository {
   private repo: Repository<Transaction>;
@@ -120,42 +121,42 @@ async create(data: {
    * Calcular total de receitas no mês
    */
   async getTotalIncome(
-    userId: string,
-    month: number,
-    year: number
-  ): Promise<number> {
-    const result = await this.repo
-      .createQueryBuilder("transaction")
-      .select("SUM(transaction.amountCents)", "total")
-      .where("transaction.userId = :userId", { userId })
-      .andWhere("EXTRACT(MONTH FROM transaction.date) = :month", { month })
-      .andWhere("EXTRACT(YEAR FROM transaction.date) = :year", { year })
-      .andWhere("transaction.category.type = :type", { type: "income" })
-      .leftJoin("transaction.category", "category")
-      .getRawOne();
+  userId: string,
+  month: number,
+  year: number
+): Promise<number> {
+  const result = await this.repo
+    .createQueryBuilder("transaction")
+    .leftJoin("transaction.category", "category")
+    .select("SUM(transaction.amountCents)", "total")
+    .where("transaction.userId = :userId", { userId })
+    .andWhere("EXTRACT(MONTH FROM transaction.date) = :month", { month })
+    .andWhere("EXTRACT(YEAR FROM transaction.date) = :year", { year })
+    .andWhere("category.type = :type", { type: TransactionType.INCOME })
+    .getRawOne();
 
-    return parseInt(result?.total) || 0;
-  }
+  return parseInt(result?.total) || 0;
+}
 
   /**
    * Calcular total de despesas no mês
    */
   async getTotalExpense(
-    userId: string,
-    month: number,
-    year: number
-  ): Promise<number> {
-    const result = await this.repo
-      .createQueryBuilder("transaction")
-      .select("SUM(transaction.amountCents)", "total")
-      .where("transaction.userId = :userId", { userId })
-      .andWhere("EXTRACT(MONTH FROM transaction.date) = :month", { month })
-      .andWhere("EXTRACT(YEAR FROM transaction.date) = :year", { year })
-      .andWhere("transaction.category.type = :type", { type: "expense" })
-      .leftJoin("transaction.category", "category")
-      .getRawOne();
+  userId: string,
+  month: number,
+  year: number
+): Promise<number> {
+  const result = await this.repo
+    .createQueryBuilder("transaction")
+    .leftJoin("transaction.category", "category")
+    .select("SUM(transaction.amountCents)", "total")
+    .where("transaction.userId = :userId", { userId })
+    .andWhere("EXTRACT(MONTH FROM transaction.date) = :month", { month })
+    .andWhere("EXTRACT(YEAR FROM transaction.date) = :year", { year })
+    .andWhere("category.type = :type", { type: TransactionType.EXPENSE })
+    .getRawOne();
 
-    return parseInt(result?.total) || 0;
+  return parseInt(result?.total) || 0;
   }
 
   async getBalance(
