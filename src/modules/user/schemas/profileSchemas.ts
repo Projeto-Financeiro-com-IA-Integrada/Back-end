@@ -33,7 +33,7 @@ export const requestEmailChangeSchema = z.object({
 });
 
 export const confirmEmailChangeSchema = z.object({
-  newEmail: z.string().email("Email inválido"),
+  newEmail: z.email("Email inválido"),
   verificationCode: z.string().length(6, "Código deve ter 6 dígitos"),
 });
 

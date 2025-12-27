@@ -19,3 +19,18 @@ export const loginSchema = z.object({
 export const resendCodeSchema = z.object({
   email: z.email(),
 });
+
+export const requestPasswordRecoverySchema = z.object({
+  email: z.email("Email inválido"),
+});
+
+export const resetPasswordSchema = z.object({
+  email: z.email("Email inválido"),
+  recoveryCode: z.string().length(6, "Código deve ter 6 dígitos"),
+  newPassword: z
+    .string()
+    .min(8, "Senha deve ter no mínimo 8 caracteres")
+    .regex(/[a-z]/, "Deve conter letra minúscula")
+    .regex(/[A-Z]/, "Deve conter letra maiúscula")
+    .regex(/\d/, "Deve conter número"),
+});

@@ -5,7 +5,9 @@ import {
   registerSchema,
   verifyEmailSchema,
   loginSchema,
-  resendCodeSchema
+  resendCodeSchema,
+  resetPasswordSchema,
+  requestPasswordRecoverySchema,
 } from "../modules/user/schemas/authSchemas";
 
 export const authRouter = Router();
@@ -33,3 +35,16 @@ authRouter.post(
   validateBody(resendCodeSchema),
   AuthController.resendCode
 );
+
+authRouter.post(
+  "/forgot-password",
+  validateBody(requestPasswordRecoverySchema),
+  (req, res) => AuthController.requestPasswordRecovery(req, res)
+);
+
+authRouter.post(
+  "/reset-password",
+  validateBody(resetPasswordSchema),
+  (req, res) => AuthController.resetPassword(req, res)
+);
+

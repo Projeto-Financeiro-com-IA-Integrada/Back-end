@@ -1,8 +1,8 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { userRepository } from "../repositories/UserRepository";
-import { sendVerificationEmail } from "../../../shared/providers/MailProvider";
-import { RedisRateLimiter } from "../../../utils/redisRateLimiter";
+import { sendPasswordRecoveryEmail, sendVerificationEmail } from "../../../shared/providers/MailProvider";
+import { RedisRateLimiter } from "../../../shared/utils/redisRateLimiter";
 
 interface RegisterDTO {
   email: string;
@@ -22,6 +22,16 @@ interface LoginDTO {
 
 interface ResendCodeDTO {
   email: string;
+}
+
+interface RequestPasswordRecoveryDTO {
+  email: string;
+}
+
+interface ResetPasswordDTO {
+  email: string;
+  recoveryCode: string;
+  newPassword: string;
 }
 
 export class UserService {
@@ -205,6 +215,105 @@ export class UserService {
     return {
       status: 200,
       body: { message: "Novo código enviado para seu e-mail" },
+    };
+  }
+
+    async requestPasswordRecovery({ email }: RequestPasswordRecoveryDTO) {
+    // Verifica Rate Limit para evitar brute force
+    const rateLimitCheck =
+      await RedisRateLimiter.checkVerificationAttempts(email);
+
+    if (!rateLimitCheck.allowed) {
+      return {
+        status: 429,
+        body: { message: rateLimitCheck.message },
+      };
+    }
+
+    const repo = userRepository();
+    const user = await repo.findOne({ where: { email } });
+
+    if (!user) {
+      return {
+        status: 200,
+        body: { message: "Se o e-mail existe, você receberá um código" },
+      };
+    }
+
+    const verificationCode = Math.floor(
+      100000 + Math.random() * 900000
+    ).toString();
+    const verificationExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+    user.verificationCode = verificationCode;
+    user.verificationExpiresAt = verificationExpiresAt;
+    await repo.save(user);
+
+    const emailSent = await sendPasswordRecoveryEmail(
+      email,
+      user.name,
+      verificationCode
+    );
+
+    if (!emailSent) {
+      return {
+        status: 500,
+        body: { message: "Falha ao enviar e-mail. Tente novamente." },
+      };
+    }
+
+    return {
+      status: 200,
+      body: { message: "Se o e-mail existe, você receberá um código" },
+    };
+  }
+
+  async resetPassword({ email, recoveryCode, newPassword }: ResetPasswordDTO) {
+    const rateLimitCheck =
+      await RedisRateLimiter.checkVerificationAttempts(email);
+
+    if (!rateLimitCheck.allowed) {
+      return {
+        status: 429,
+        body: { message: rateLimitCheck.message },
+      };
+    }
+
+    const repo = userRepository();
+    const user = await repo.findOne({ where: { email } });
+
+    if (!user) {
+      await RedisRateLimiter.recordFailedAttempt(email);
+      return {
+        status: 400,
+        body: { message: "E-mail ou código inválido" },
+      };
+    }
+
+    if (
+      user.verificationCode !== recoveryCode ||
+      !user.verificationExpiresAt ||
+      user.verificationExpiresAt < new Date()
+    ) {
+      await RedisRateLimiter.recordFailedAttempt(email);
+      return {
+        status: 400,
+        body: { message: "Código inválido ou expirado" },
+      };
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+
+    user.passwordHash = passwordHash;
+    user.verificationCode = null;
+    user.verificationExpiresAt = null;
+    await repo.save(user);
+
+    await RedisRateLimiter.resetAttempts(email);
+
+    return {
+      status: 200,
+      body: { message: "Senha redefinida com sucesso" },
     };
   }
 }

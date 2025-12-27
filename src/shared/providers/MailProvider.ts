@@ -127,3 +127,67 @@ export async function sendAccountDeletionEmail(
     return false;
   }
 }
+
+export async function sendPasswordRecoveryEmail(
+  toEmail: string,
+  userName: string,
+  recoveryCode: string
+) {
+  try {
+    const message = await transporter.sendMail({
+      from: `"App Financeiro" <${process.env.SMTP_FROM}>`,
+      to: toEmail,
+      subject: "Recupere sua senha - App Financeiro",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #333;">Redefinição de Senha 🔐</h2>
+          
+          <p>Olá, ${userName}!</p>
+          
+          <p>Recebemos uma solicitação para redefinir a senha da sua conta no <strong>App Financeiro</strong>.</p>
+          
+          <p>Use o código abaixo para criar uma nova senha:</p>
+          
+          <div style="background-color: #f0f0f0; padding: 20px; border-radius: 8px; text-align: center; margin: 30px 0;">
+            <p style="font-size: 14px; color: #888;">Código de recuperação:</p>
+            <h1 style="color: #2c3e50; margin: 10px 0;">${recoveryCode}</h1>
+          </div>
+          
+          <p style="font-size: 14px; color: #888;">
+            ⏱️ Este código expira em <strong>15 minutos</strong>.
+          </p>
+          
+          <p style="font-size: 14px; color: #555;">
+            Se você NÃO solicitou a recuperação de senha, ignore este e-mail. Sua conta está segura.
+          </p>
+          
+          <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+          
+          <p style="font-size: 12px; color: #999; text-align: center;">
+            © 2025 App Financeiro. Todos os direitos reservados.
+          </p>
+        </div>
+      `,
+      text: [
+        `Olá ${userName}!`,
+        ``,
+        `Recebemos uma solicitação para redefinir sua senha.`,
+        ``,
+        `Código de recuperação: ${recoveryCode}`,
+        ``,
+        `Este código expira em 15 minutos.`,
+        ``,
+        `Se você não fez essa solicitação, ignore este e-mail.`,
+      ].join("\n"),
+    });
+
+    console.log(
+      `Email de recuperação enviado para ${toEmail}:`,
+      message.messageId
+    );
+    return true;
+  } catch (error) {
+    console.error("Erro ao enviar e-mail de recuperação:", error);
+    return false;
+  }
+}
