@@ -9,12 +9,9 @@ export class TransactionController {
     this.transactionService = new TransactionService();
   }
 
-  /**
-   * POST /transactions - Criar transação
-   */
   async create(req: Request, res: Response): Promise<Response> {
     try {
-      const userId = req.userId; // Vem do middleware de autenticação
+      const userId = (req as any).userId;
       const transaction = await this.transactionService.createTransaction(
         userId!,
         req.body
@@ -44,7 +41,7 @@ export class TransactionController {
    */
   async getById(req: Request, res: Response): Promise<Response> {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
       const { id } = req.params;
 
       const transaction = await this.transactionService.getTransactionById(
@@ -75,7 +72,7 @@ export class TransactionController {
    */
   async list(req: Request, res: Response): Promise<Response> {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
       const limit = parseInt(req.query.limit as string) || 20;
       const page = parseInt(req.query.page as string) || 1;
 
@@ -103,7 +100,7 @@ export class TransactionController {
    */
   async getMonthly(req: Request, res: Response): Promise<Response> {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
       const { month, year } = req.params;
 
       const result = await this.transactionService.getMonthlyTransactions(
@@ -136,7 +133,7 @@ export class TransactionController {
    */
   async getBalance(req: Request, res: Response): Promise<Response> {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
       const { month, year } = req.params;
 
       const balance = await this.transactionService.getMonthlyBalance(
@@ -168,7 +165,7 @@ export class TransactionController {
    */
   async update(req: Request, res: Response): Promise<Response> {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
       const { id } = req.params;
 
       const transaction = await this.transactionService.updateTransaction(
@@ -201,7 +198,7 @@ export class TransactionController {
    */
   async delete(req: Request, res: Response): Promise<Response> {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
       const { id } = req.params;
 
       const result = await this.transactionService.deleteTransaction(userId!, id);
@@ -229,7 +226,7 @@ export class TransactionController {
    */
   async getByCategory(req: Request, res: Response): Promise<Response> {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
       const { categoryId } = req.params;
 
       const transactions = await this.transactionService.getTransactionsByCategory(

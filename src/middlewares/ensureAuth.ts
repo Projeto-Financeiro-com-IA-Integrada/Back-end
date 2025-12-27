@@ -23,8 +23,8 @@ export function ensureAuth(req: Request, res: Response, next: NextFunction) {
     const secret = process.env.JWT_SECRET as string;
     const decoded = jwt.verify(token, secret) as JwtPayload;
 
-    req.userId = decoded.sub;
-    req.userEmail = decoded.email;
+    (req as any).userId = decoded.sub;
+    (req as any).userEmail = decoded.email;
 
     return next();
   } catch {
