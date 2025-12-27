@@ -1,7 +1,7 @@
 import "reflect-metadata";
 import dotenv from "dotenv";
 import { AppDataSource } from "./data-source";
-import { initializeRedis } from "./utils/redisRateLimiter";
+import { initializeRedis } from "./shared/utils/redisRateLimiter";
 import { app } from "./app";
 import { categoriesSeed } from "./database/seeds/CategorySeed";
 

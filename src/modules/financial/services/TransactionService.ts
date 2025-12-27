@@ -3,7 +3,7 @@ import { CategoryRepository } from "../repositories/CategoryRepository";
 import { TransactionRepository } from "../repositories/TransactionRepository";
 import { createTransactionSchema, updateTransactionSchema } from "../schemas/transactionSchemas";
 import { Transaction } from "../entities/Transaction";
-import { fromBRL, formatBRL, toBRL } from "../../../utils/currency";
+import { fromBRL, formatBRL, toBRL } from "../../../shared/utils/currency";
 
 export class TransactionService {
   private transactionRepository: TransactionRepository;
