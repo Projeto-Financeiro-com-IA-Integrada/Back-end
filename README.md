@@ -108,13 +108,16 @@ DB_PASSWORD=sua_senha
 DB_DATABASE=nome_do_banco
 
 JWT_SECRET=uma_senha_bem_secreta
-NODE_ENV=dev
 
 SMTP_HOST=smtp.seuprovedor.com
 SMTP_PORT=587
 SMTP_USER=seu_usuario_smtp
 SMTP_PASS=sua_senha_smtp
 SMTP_FROM=nao-responda@seu-dominio.com
+
+GEMINI_API_KEY=sua_chave_aqui
+NODE_ENV=development
+
 ```
 
 3. **Subir PostgreSQL**
@@ -340,17 +343,6 @@ Confirma deleção com código.
 
 ---
 
-## Vídeo completo
-
-Assista a uma demonstração completa do backend em ação:
-
-📺 [Backend em Node.js + TypeScript - Auth, Perfil, E-mail e Segurança](https://www.youtube.com/watch?v=_p_ziqVnM24)
-
-
-📺 [Backend em Node.js + TypeScript - Auth, Perfil, E-mail e Segurança](https://www.youtube.com/watch?v=_p_ziqVnM24)
-
----
-
 ## 🤖 Inteligência Artificial (IA)
 
 ### Stack IA
@@ -501,22 +493,10 @@ Retorna ao usuário
    - Histórico pode ser auditado e melhorado
    - Usuário pode deletar sua conta (deleta todas as conversas)
 
-### Variáveis de Ambiente Necessárias
-
-```bash
-# .env
-GEMINI_API_KEY=sua_chave_aqui
-NODE_ENV=development
-```
 
 ### Roadmap Futuro
 
 - [ ] Chat em tempo real com WebSocket
 - [ ] Metas financeiras com IA (ex: economizar R$ 5.000 em 6 meses)
-- [ ] Previsão de saldo para próximos meses
-- [ ] Integração com múltiplos LLMs (OpenAI, Claude)
-- [ ] Fine-tuning com dados financeiros do usuário
 - [ ] Análise de investimentos inteligente
 - [ ] Alertas automáticos baseados em padrões
-
----
