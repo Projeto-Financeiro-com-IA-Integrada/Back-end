@@ -345,3 +345,178 @@ Confirma deleção com código.
 Assista a uma demonstração completa do backend em ação:
 
 📺 [Backend em Node.js + TypeScript - Auth, Perfil, E-mail e Segurança](https://www.youtube.com/watch?v=_p_ziqVnM24)
+
+
+📺 [Backend em Node.js + TypeScript - Auth, Perfil, E-mail e Segurança](https://www.youtube.com/watch?v=_p_ziqVnM24)
+
+---
+
+## 🤖 Inteligência Artificial (IA)
+
+### Stack IA
+
+- **Google Gemini API** (Generative AI)
+- **LangChain.js** (para RAG simplificado no futuro)
+- **Histórico de Conversas** (Entity + Repository)
+
+### Funcionalidades de IA
+
+#### 1. **Chat Financeiro** 💬
+
+Pergunta e resposta em linguagem natural sobre a situação financeira do usuário.
+
+**Exemplo:**
+```
+P: "Como posso economizar mais esse mês?"
+R: "Baseado em seus gastos, você gastou R$ 500 com alimentação. Sugestão: reduzir em 15-20% equivaleria a R$ 75-100 de economia."
+```
+
+#### 2. **Relatório Mensal Inteligente** 📊
+
+Análise detalhada do mês com insights sobre padrões de gasto, pontos críticos e recomendações práticas.
+
+**Dados Utilizados:**
+- Total de receitas e despesas
+- Distribuição por categoria
+- Saldo líquido
+- Score de saúde financeira (0-10)
+
+#### 3. **Análise de Categoria** 🔍
+
+Dive-deep em uma categoria específica para entender o padrão de consumo.
+
+**Exemplo:**
+- Categoria: "Alimentação"
+- Total do mês: R$ 850
+- Transações: 12
+- Análise: "Seu gasto médio é R$ 70,83 por transação. Comparado à média nacional, está 10% acima."
+
+### Arquitetura do Módulo AI
+
+```
+src/modules/ai/
+├── controllers/
+│   └── AIController.ts          # Lógica de requisição/resposta
+├── schemas/
+│   └── aiSchemas.ts             # Validação com Zod
+├── services/
+│   └── AIService.ts             # Lógica de integração com Gemini
+└── entities/
+    └── Conversation.ts          # Entidade para histórico
+```
+
+### Rotas de IA
+
+| Método | Endpoint | Descrição |
+|--------|----------|--------|
+| `POST` | `/ai/chat` | Chat financeiro com IA |
+| `POST` | `/ai/report` | Gerar relatório mensal |
+| `POST` | `/ai/analyze-category` | Analisar gastos de categoria |
+
+### Exemplos de Uso
+
+#### Chat Financeiro
+
+```bash
+curl -X POST http://localhost:3000/api/ai/chat \
+  -H "Authorization: Bearer <seu_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "Como posso economizar mais esse mês?"
+  }'
+```
+
+**Resposta:**
+```json
+{
+  "response": "Baseado em seus dados de dezembro/2025, você gastou R$ 1.890 em despesas e recebeu R$ 3.500 de receitas. Seu saldo positivo é de R$ 1.610. Sugestões: ..."
+}
+```
+
+#### Gerar Relatório
+
+```bash
+curl -X POST http://localhost:3000/api/ai/report \
+  -H "Authorization: Bearer <seu_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "month": 1,
+    "year": 2026
+  }'
+```
+
+#### Analisar Categoria
+
+```bash
+curl -X POST http://localhost:3000/api/ai/analyze-category \
+  -H "Authorization: Bearer <seu_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "categoryId": "uuid-da-categoria",
+    "month": 1,
+    "year": 2026
+  }'
+```
+
+### Fluxo de Dados (RAG Simplificado)
+
+```
+Usuário
+   ↓
+Endpoint /ai/chat
+   ↓
+AIController.chat()
+   ↓
+AIService
+   ├─ Busca últimas 10 transações (findByUserId)
+   ├─ Calcula saldo do mês (getTotalIncome + getTotalExpense)
+   ├─ Monta contexto em linguagem natural
+   └─ Envia para Google Gemini
+   ↓
+Gemini responde
+   ↓
+Salva resposta em Conversation (histórico)
+   ↓
+Retorna ao usuário
+```
+
+### Segurança e Privacidade
+
+⚠️ **IMPORTANTE:**
+
+1. **Nunca enviar para a IA:**
+   - Dados de cartão de crédito
+   - CPF/Documentos
+   - Senhas
+   - Dados sensíveis além do contexto financeiro
+
+2. **Dados Enviados à IA:**
+   - Descrição das transações (ex: "Supermercado Carrefour")
+   - Valores em reais (não dados brutos do banco)
+   - Datas e categorias
+   - Histórico de pergunta + resposta (sem dados sensíveis)
+
+3. **Armazenamento Local:**
+   - Todas as conversas são salvas no banco de dados local
+   - Histórico pode ser auditado e melhorado
+   - Usuário pode deletar sua conta (deleta todas as conversas)
+
+### Variáveis de Ambiente Necessárias
+
+```bash
+# .env
+GEMINI_API_KEY=sua_chave_aqui
+NODE_ENV=development
+```
+
+### Roadmap Futuro
+
+- [ ] Chat em tempo real com WebSocket
+- [ ] Metas financeiras com IA (ex: economizar R$ 5.000 em 6 meses)
+- [ ] Previsão de saldo para próximos meses
+- [ ] Integração com múltiplos LLMs (OpenAI, Claude)
+- [ ] Fine-tuning com dados financeiros do usuário
+- [ ] Análise de investimentos inteligente
+- [ ] Alertas automáticos baseados em padrões
+
+---
