@@ -23,7 +23,7 @@ export class AIController {
 
   async generateReport(req: Request, res: Response): Promise<Response> {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).userId;
       const { month, year } = req.body;
 
       const report = await this.aiService.generateMonthlyReport(
