@@ -83,19 +83,18 @@ DB_USERNAME=your_db_user
 DB_PASSWORD=your_db_password
 DB_DATABASE=finapp_db
 
-# JWT
-JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
+JWT_SECRET=uma_senha_bem_secreta
 
 # Email Config (Gmail SMTP)
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
-SMTP_USER=your_gmail@gmail.com
-SMTP_PASS=your_app_password
-SMTP_FROM=your_gmail@gmail.com
+SMTP_USER=seu_usuario_smtp
+SMTP_PASS=sua_senha_smtp
+SMTP_FROM=nao-responda@seu-dominio.com
 
-# Redis
-REDIS_HOST=localhost
-REDIS_PORT=6379
+GEMINI_API_KEY=sua_chave_aqui
+NODE_ENV=development
+
 ```
 
 **Nota:** Para Gmail, use uma [App Password](https://support.google.com/accounts/answer/185833) em vez de sua senha normal.
@@ -409,8 +408,160 @@ Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalh
 
 ---
 
-## Contato
+## 🤖 Inteligência Artificial (IA)
 
-Projeto criado como parte da visão de democratizar a educação financeira com IA.
+### Stack IA
 
-Para dúvidas ou sugestões, abra uma issue no repositório ou entre em contato direto.
+- **Google Gemini API** (Generative AI)
+- **LangChain.js** (para RAG simplificado no futuro)
+- **Histórico de Conversas** (Entity + Repository)
+
+### Funcionalidades de IA
+
+#### 1. **Chat Financeiro** 💬
+
+Pergunta e resposta em linguagem natural sobre a situação financeira do usuário.
+
+**Exemplo:**
+```
+P: "Como posso economizar mais esse mês?"
+R: "Baseado em seus gastos, você gastou R$ 500 com alimentação. Sugestão: reduzir em 15-20% equivaleria a R$ 75-100 de economia."
+```
+
+#### 2. **Relatório Mensal Inteligente** 📊
+
+Análise detalhada do mês com insights sobre padrões de gasto, pontos críticos e recomendações práticas.
+
+**Dados Utilizados:**
+- Total de receitas e despesas
+- Distribuição por categoria
+- Saldo líquido
+- Score de saúde financeira (0-10)
+
+#### 3. **Análise de Categoria** 🔍
+
+Dive-deep em uma categoria específica para entender o padrão de consumo.
+
+**Exemplo:**
+- Categoria: "Alimentação"
+- Total do mês: R$ 850
+- Transações: 12
+- Análise: "Seu gasto médio é R$ 70,83 por transação. Comparado à média nacional, está 10% acima."
+
+### Arquitetura do Módulo AI
+
+```
+src/modules/ai/
+├── controllers/
+│   └── AIController.ts          # Lógica de requisição/resposta
+├── schemas/
+│   └── aiSchemas.ts             # Validação com Zod
+├── services/
+│   └── AIService.ts             # Lógica de integração com Gemini
+└── entities/
+    └── Conversation.ts          # Entidade para histórico
+```
+
+### Rotas de IA
+
+| Método | Endpoint | Descrição |
+|--------|----------|--------|
+| `POST` | `/ai/chat` | Chat financeiro com IA |
+| `POST` | `/ai/report` | Gerar relatório mensal |
+| `POST` | `/ai/analyze-category` | Analisar gastos de categoria |
+
+### Exemplos de Uso
+
+#### Chat Financeiro
+
+```bash
+curl -X POST http://localhost:3000/api/ai/chat \
+  -H "Authorization: Bearer <seu_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "Como posso economizar mais esse mês?"
+  }'
+```
+
+**Resposta:**
+```json
+{
+  "response": "Baseado em seus dados de dezembro/2025, você gastou R$ 1.890 em despesas e recebeu R$ 3.500 de receitas. Seu saldo positivo é de R$ 1.610. Sugestões: ..."
+}
+```
+
+#### Gerar Relatório
+
+```bash
+curl -X POST http://localhost:3000/api/ai/report \
+  -H "Authorization: Bearer <seu_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "month": 1,
+    "year": 2026
+  }'
+```
+
+#### Analisar Categoria
+
+```bash
+curl -X POST http://localhost:3000/api/ai/analyze-category \
+  -H "Authorization: Bearer <seu_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "categoryId": "uuid-da-categoria",
+    "month": 1,
+    "year": 2026
+  }'
+```
+
+### Fluxo de Dados (RAG Simplificado)
+
+```
+Usuário
+   ↓
+Endpoint /ai/chat
+   ↓
+AIController.chat()
+   ↓
+AIService
+   ├─ Busca últimas 10 transações (findByUserId)
+   ├─ Calcula saldo do mês (getTotalIncome + getTotalExpense)
+   ├─ Monta contexto em linguagem natural
+   └─ Envia para Google Gemini
+   ↓
+Gemini responde
+   ↓
+Salva resposta em Conversation (histórico)
+   ↓
+Retorna ao usuário
+```
+
+### Segurança e Privacidade
+
+⚠️ **IMPORTANTE:**
+
+1. **Nunca enviar para a IA:**
+   - Dados de cartão de crédito
+   - CPF/Documentos
+   - Senhas
+   - Dados sensíveis além do contexto financeiro
+
+2. **Dados Enviados à IA:**
+   - Descrição das transações (ex: "Supermercado Carrefour")
+   - Valores em reais (não dados brutos do banco)
+   - Datas e categorias
+   - Histórico de pergunta + resposta (sem dados sensíveis)
+
+3. **Armazenamento Local:**
+   - Todas as conversas são salvas no banco de dados local
+   - Histórico pode ser auditado e melhorado
+   - Usuário pode deletar sua conta (deleta todas as conversas)
+
+
+### Roadmap Futuro
+
+- [ ] Chat em tempo real com WebSocket
+- [ ] Metas financeiras com IA (ex: economizar R$ 5.000 em 6 meses)
+- [ ] Análise de investimentos inteligente
+- [ ] Alertas automáticos baseados em padrões
