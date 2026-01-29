@@ -20,6 +20,7 @@ Este repositório contém o back-end responsável por:
 - Validação de entrada com **Zod**
 - Integração com **PostgreSQL** via **TypeORM**
 - Envio de e-mails transacionais com **Nodemailer**
+- Rate limiting com **Redis** para proteção contra brute-force
 - Infra básica para, no futuro, expor:
   - CRUD de transações (receitas, despesas, transferências)
   - Gestão de metas financeiras com suporte de IA
@@ -36,80 +37,56 @@ Este repositório contém o back-end responsável por:
 - TypeORM
 - JWT para autenticação
 - Zod para validação de schemas
+- Redis para rate limiting e cache
 - Docker / Docker Compose
 - Nodemailer (SMTP)
 - (Futuro) Swagger/OpenAPI para documentação
 
 ---
 
-## Estrutura do projeto
+## Pré-requisitos
 
-```
-src/
-  app.ts                          # Configuração do Express
-  server.ts                       # Bootstrap do servidor
-  data-source.ts                  # Configuração do TypeORM
-
-  routes/
-    index.ts                      # Agregador de todas as rotas
-    auth.ts                       # Rotas de autenticação
-    profile.ts                    # Rotas de perfil
-
-  middlewares/
-    validateBody.ts               # Validação com Zod
-    ensureAuth.ts                 # Middleware de JWT
-
-  shared/
-    providers/
-      MailProvider.ts             # Nodemailer + funções de e-mail
-
-  modules/
-    user/
-      entities/
-        User.ts
-      repositories/
-        UserRepository.ts
-      schemas/
-        authSchemas.ts
-        profileSchemas.ts
-      services/
-        UserService.ts
-        ProfileService.ts
-      controllers/
-        AuthController.ts
-        ProfileController.ts
-```
+- Node.js (v18+)
+- Docker & Docker Compose
+- npm ou yarn
 
 ---
 
-## Como rodar em desenvolvimento
+## Instalação
 
-### Pré-requisitos
-
-- Node.js LTS
-- Docker e Docker Compose
-
-### Passos
-
-1. **Clonar o repositório**
+### 1. Clone o repositório
 
 ```bash
 git clone https://github.com/Projeto-Financeiro-com-IA-Integrada/Back-end.git
 cd Back-end
 ```
 
-2. **Criar arquivo `.env`**
+### 2. Instale as dependências
+
+```bash
+npm install
+```
+
+### 3. Configure as variáveis de ambiente
+
+Crie um arquivo `.env` na raiz do projeto e preencha com as seguintes variáveis:
 
 ```env
+# Servidor
+PORT=3000
+NODE_ENV=development
+
+# Database
 DB_HOST=localhost
 DB_PORT=5432
-DB_USERNAME=seu_usuario
-DB_PASSWORD=sua_senha
-DB_DATABASE=nome_do_banco
+DB_USERNAME=your_db_user
+DB_PASSWORD=your_db_password
+DB_DATABASE=finapp_db
 
 JWT_SECRET=uma_senha_bem_secreta
 
-SMTP_HOST=smtp.seuprovedor.com
+# Email Config (Gmail SMTP)
+SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=seu_usuario_smtp
 SMTP_PASS=sua_senha_smtp
@@ -120,64 +97,77 @@ NODE_ENV=development
 
 ```
 
-3. **Subir PostgreSQL**
+**Nota:** Para Gmail, use uma [App Password](https://support.google.com/accounts/answer/185833) em vez de sua senha normal.
+
+### 4. Inicie os containers (PostgreSQL + Redis)
 
 ```bash
-docker compose up -d
+docker-compose up -d
 ```
 
-4. **Instalar dependências**
+Verifique se os containers estão rodando:
 
 ```bash
-npm install
+docker-compose ps
 ```
 
-5. **Rodar servidor**
+### 5. Execute o servidor em desenvolvimento
 
 ```bash
 npm run dev
 ```
 
-A API estará disponível em `http://localhost:3000`
+O servidor estará disponível em `http://localhost:3000`
 
 Swagger docs: `http://localhost:3000/api-docs`
 
 ---
 
-## Endpoints disponíveis
+## Endpoints da API
 
-### 🔐 Autenticação (`/auth`)
+### Autenticação
 
 #### POST `/auth/register`
 
-Cadastro de usuário + código de verificação por e-mail.
+Registro de novo usuário com envio de código de verificação por e-mail.
 
 ```json
 {
-  "email": "teste@example.com",
-  "name": "Nome do Usuário",
+  "email": "user@example.com",
+  "name": "João da Silva",
   "password": "senhaForte123"
 }
 ```
 
-**Respostas:** `201` (sucesso), `409` (e-mail já existe), `400` (validação)
-
----
+**Respostas:**
+- `201` (Criado), `400` (Validação)
 
 #### POST `/auth/verify-email`
 
-Verificação de e-mail com código.
+Verificação de e-mail com código numérico.
 
 ```json
 {
-  "email": "teste@example.com",
+  "email": "user@example.com",
   "code": "123456"
 }
 ```
 
-**Respostas:** `200` (verificado), `400` (código inválido), `404` (não encontrado)
+**Respostas:**
+- `200` (Sucesso), `400` (Código inválido), `429` (Muitas tentativas - Rate Limit)
 
----
+#### POST `/auth/resend-code`
+
+Reenvio de código de verificação.
+
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+**Respostas:**
+- `200` (Reenviado), `400` (E-mail não existe)
 
 #### POST `/auth/login`
 
@@ -185,161 +175,236 @@ Login com JWT.
 
 ```json
 {
-  "email": "teste@example.com",
+  "email": "user@example.com",
   "password": "senhaForte123"
 }
 ```
 
-**Resposta:**
-```json
-{
-  "accessToken": "jwt_aqui"
-}
-```
-
-**Respostas:** `200` (sucesso), `401` (credenciais inválidas), `403` (e-mail não verificado)
+**Respostas:**
+- `200` (Token JWT), `401` (Credenciais inválidas)
 
 ---
 
-#### POST `/auth/resend-code`
+### Perfil
 
-Reenviar código de verificação.
+#### GET `/profile`
 
-```json
-{
-  "email": "teste@example.com"
-}
-```
+Visualizar perfil do usuário autenticado.
 
-**Respostas:** `200` (enviado), `400` (já verificado), `404` (não encontrado)
+**Headers:** `Authorization: Bearer <token>`
 
----
+**Respostas:**
+- `200` (Perfil), `401` (Não autenticado)
 
-### 👤 Perfil (`/user/profile`)
+#### PATCH `/profile`
 
-> **Todas exigem:** `Authorization: Bearer <seu_jwt>`
-
-#### GET `/user/profile`
-
-Retorna dados do usuário (sem senha).
-
-**Resposta:**
-```json
-{
-  "id": "uuid",
-  "email": "teste@example.com",
-  "name": "Nome",
-  "isVerified": true,
-  "createdAt": "2025-01-01T00:00:00.000Z",
-  "updatedAt": "2025-01-01T00:00:00.000Z"
-}
-```
-
----
-
-#### PATCH `/user/profile`
-
-Atualiza nome e/ou senha.
+Atualizar nome e/ou senha do usuário.
 
 ```json
 {
-  "name": "Novo Nome"
+  "name": "Novo Nome (opcional)",
+  "currentPassword": "senhaAtual",
+  "newPassword": "novaSenha123 (opcional)"
 }
 ```
 
-Ou para alterar senha:
+**Headers:** `Authorization: Bearer <token>`
+
+**Respostas:**
+- `200` (Atualizado), `400` (Validação), `401` (Não autenticado), `403` (Senha incorreta)
+
+#### POST `/profile/change-email`
+
+Iniciar fluxo de alteração de e-mail (Etapa 1: Validar senha).
 
 ```json
 {
-  "currentPassword": "senhaForte123",
-  "newPassword": "NovaSenha123"
+  "newEmail": "newemail@example.com",
+  "password": "suaSenha"
 }
 ```
 
-**Respostas:** `200` (atualizado), `401` (senha incorreta), `400` (validação)
+**Headers:** `Authorization: Bearer <token>`
 
----
+**Respostas:**
+- `200` (Código enviado para novo e-mail), `400` (Validação), `401` (Não autenticado), `403` (Senha incorreta)
 
-### 📧 Alteração de e-mail
+#### POST `/profile/verify-email-change`
 
-#### POST `/user/profile/email/request`
-
-Solicita alteração (envia código para novo e-mail).
+Concluir alteração de e-mail (Etapa 2: Validar código).
 
 ```json
 {
-  "newEmail": "novo-email@example.com"
+  "code": "123456"
 }
 ```
 
-**Respostas:** `200` (código enviado), `409` (e-mail em uso), `404` (não encontrado)
+**Headers:** `Authorization: Bearer <token>`
 
----
+**Respostas:**
+- `200` (E-mail alterado), `400` (Código inválido), `401` (Não autenticado)
 
-#### PATCH `/user/profile/email/confirm`
+#### POST `/profile/delete`
 
-Confirma alteração com código.
+Iniciar fluxo seguro de deleção de conta (Etapa 1: Validar senha).
 
 ```json
 {
-  "newEmail": "novo-email@example.com",
-  "verificationCode": "123456"
+  "password": "suaSenha"
 }
 ```
 
-**Respostas:** `200` (alterado), `400` (código inválido), `404` (não encontrado)
+**Headers:** `Authorization: Bearer <token>`
 
----
+**Respostas:**
+- `200` (Código enviado), `401` (Não autenticado), `403` (Senha incorreta)
 
-### 🗑️ Deleção de conta
+#### POST `/profile/confirm-delete`
 
-**Fluxo em 2 etapas:**
-1. Informa senha → recebe código por e-mail
-2. Confirma com código
-
-#### POST `/user/profile/delete/request`
-
-Valida senha e envia código de deleção.
+Confirmar deleção de conta (Etapa 2: Validar código).
 
 ```json
 {
-  "password": "suaSenhaAtual"
+  "code": "123456"
 }
 ```
 
-**Respostas:** `200` (código enviado), `401` (senha incorreta), `404` (não encontrado)
+**Headers:** `Authorization: Bearer <token>`
+
+**Respostas:**
+- `200` (Conta deletada), `400` (Código inválido), `401` (Não autenticado)
 
 ---
 
-#### DELETE `/user/profile/delete/confirm`
+## Segurança
 
-Confirma deleção com código.
+### Rate Limiting com Redis
 
-```json
-{
-  "verificationCode": "123456"
-}
+Os endpoints de autenticação utilizam **Redis** para implementar rate limiting contra ataques de brute-force:
+
+- **Verificação de e-mail:** Máximo 5 tentativas em 15 minutos
+- **Bloqueio:** Após exceder o limite, a conta é bloqueada por 30 minutos
+- **Detecção:** IP/email são rastreados para detecção de abuso
+
+### Validação de Entrada
+
+Todas as rotas utilizam **Zod** para validação de schemas, garantindo tipos seguros e dados válidos.
+
+### Autenticação
+
+- JWT para sessões de usuário
+- Senhas criptografadas com bcrypt
+- Códigos de verificação gerados aleatoriamente
+
+---
+
+## Estrutura do Projeto
+
+```
+src/
+├── modules/
+│   └── user/
+│       ├── controllers/      # Lógica de requisição/resposta
+│       ├── services/         # Lógica de negócio
+│       ├── repositories/     # Acesso a dados (TypeORM)
+│       ├── schemas/          # Validação com Zod
+│       ├── entities/         # Modelos de banco de dados
+│       └── routes/           # Definição de endpoints
+├── shared/
+│   ├── providers/
+│   ├── middlewares/          # Autenticação, validação, etc.
+│   └── utils/
+├── data-source.ts            # Configuração TypeORM
+├── app.ts                    # Instância Express
+└── server.ts                 # Inicialização do servidor
 ```
 
-**Respostas:** `200` (conta deletada), `400` (código inválido), `404` (não encontrado)
+---
+
+## Desenvolvimento
+
+### Scripts disponíveis
+
+```bash
+# Desenvolvimento com hot-reload
+npm run dev
+
+# Build para produção
+npm run build
+
+# Executar versão compilada
+npm run start
+
+# TypeORM CLI (migrations, etc.)
+npm run typeorm
+```
+
+### Logs do Docker Compose
+
+```bash
+# Ver logs de todos os serviços
+docker-compose logs -f
+
+# Ver logs apenas do Redis
+docker-compose logs -f redis
+
+# Ver logs apenas do PostgreSQL
+docker-compose logs -f db
+```
 
 ---
 
-## Próximos passos
+## Roadmap
 
-- CRUD de transações financeiras
-- Metas financeiras com IA
-- Relatórios mensais inteligentes
-- Chat financeiro com IA
-- Documentação com Swagger/OpenAPI
+- [ ] CRUD de transações (receitas, despesas, transferências)
+- [ ] Gestão de metas financeiras
+- [ ] Relatórios mensais com IA
+- [ ] Chat financeiro em tempo real
+- [ ] Integração com IA (OpenAI/Claude)
+- [ ] Webhooks para eventos de transação
+- [ ] Documentação Swagger/OpenAPI
+- [ ] Testes automatizados (Jest)
 
 ---
 
-## Como contribuir
+## Troubleshooting
 
-- Abrir issues com bugs/sugestões
-- Enviar pull requests com melhorias
-- Usar como referência para estudar backend em Node.js + TypeScript
+### Redis não conecta
+
+```bash
+# Verificar se o container está rodando
+docker-compose ps
+
+# Reiniciar os containers
+docker-compose restart
+```
+
+### Erro de conexão com PostgreSQL
+
+```bash
+# Verificar logs do banco
+docker-compose logs db
+
+# Resetar volume de dados (CUIDADO: Deleta dados!)
+docker-compose down -v
+docker-compose up -d
+```
+
+---
+
+## Contribuindo
+
+1. Faça um Fork do projeto
+2. Crie uma Branch para sua Feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a Branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request
+
+---
+
+## Licença
+
+Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
 
 ---
 
